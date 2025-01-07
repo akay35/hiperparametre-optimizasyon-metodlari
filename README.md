@@ -110,3 +110,5 @@ TPOT, evrimsel algoritmalarla çalışarak çeşitli model yapılarını "evriml
 - random_state: Sonuçların tekrar edilebilirliğini sağlar.
 - scoring: Hangi skor metriği ile modeli değerlendireceğini belirler (örneğin, doğruluk, f1 skoru vb.).
 
+TPOT, çok sayıda model ve parametreyi test ettiği için yüksek hesaplama gücü gerektirir, büyük veri setleri veya çok sayıda nesil ile işlem yapıldığında, işlem süresi oldukça uzun olabilir.
+
