@@ -87,6 +87,8 @@ HalvingGridSearchCV, GridSearchCV'nin genişletilmiş bir versiyonudur. GridSear
 - min_resources: İlk denemede kullanılacak en küçük örnek sayısı.
 - n_jobs       : Paralel işleme sayısı.
 
+---
+
 ### 5. Evolutionary Algorithms
 
 TPOT (Tree-based Pipeline Optimization Tool), evrimsel algoritmalarla otomatik makine öğrenimi (AutoML) sağlayan bir Python kütüphanesidir. TPOT, veriler üzerinde model oluşturma sürecini otomatize eder. Bu, genetik algoritmalar kullanarak farklı model yapılarını (algoritmalar, hiperparametreler, veri işleme yöntemleri vb.) deneyip optimize eder.
@@ -111,4 +113,46 @@ TPOT, evrimsel algoritmalarla çalışarak çeşitli model yapılarını "evriml
 - scoring: Hangi skor metriği ile modeli değerlendireceğini belirler (örneğin, doğruluk, f1 skoru vb.).
 
 TPOT, çok sayıda model ve parametreyi test ettiği için yüksek hesaplama gücü gerektirir, büyük veri setleri veya çok sayıda nesil ile işlem yapıldığında, işlem süresi oldukça uzun olabilir.
+
+---
+
+### 6. Tree-structured Parzen Estimator (TPE)
+###### Hiperparametreleri sistematik bir şekilde aramak yerine, olasılıksal bir model kullanarak en iyi hiperparametreleri tahmin eder. 
+###### Bu yöntem, Bayesian optimization çerçevesinde çalışır ve hiperparametre arama işlemini daha etkili ve verimli hale getirir.
+###### TPE, özellikle Hyperopt kütüphanesinde bir optimizasyon algoritması olarak yaygınca kullanılır. 
+
+##### TPE Çalışma Prensibi
+- Hiperparametre Alanını Tanımlama: Hiperparametreler için bir arama alanı (search space) belirlenir. Bu alan, sürekli (örneğin öğrenme oranı), ayrık (örneğin katman sayısı), veya kategorik (örneğin aktivasyon fonksiyonu) değerlerden oluşabilir.
+- İlk Rastgele Denemeler: TPE, başlangıçta hiperparametre kombinasyonlarını rastgele seçer ve bu kombinasyonları değerlendirir (örneğin, çapraz doğrulama sonucu ile). Bu denemeler, olasılık dağılımlarını oluşturmak için veri sağlar.
+- Performans Dağılımlarını Modelleme: Hedef performans (örneğin, doğruluk) için bir eşik değeri y* belirlenir. Bu değer, genellikle tüm hedef değerlerin belirli bir yüzdelik dilimidir (örneğin, ilk %20'lik dilim).
+- Daha sonra, hiperparametreler iki gruba ayrılır:
+
+𝑙 (𝑥): 𝑦>𝑦∗ (daha kötü performans)
+𝑔(𝑥): 𝑦≤𝑦∗ (daha iyi performans)
+
+- Yeni Hiperparametre Önerileri: TPE, daha önceki denemelerde yüksek performans göstermiş hiperparametre değerlerinin etrafında yoğunlaşan yeni hiperparametreler önerir. Bu, 𝑔(𝑥) / 𝑙(𝑥) oranını maksimize edecek şekilde yapılır.
+- Deneme ve Güncelleme: Önerilen hiperparametreler denendikten sonra sonuçlar kaydedilir ve olasılık modelleri güncellenir. Bu işlem, belirlenen bir iterasyon veya zaman sınırına kadar devam eder.
+
+##### Tree-structured Parzen Estimator (TPE) Parametre Ayarlamaları
+###### 1. Hiperparametre Arama Alanı (Search Space)
+- hp.choice(label, options)
+Ayrık (discrete) değerler arasından seçim yapar. Örneğin, karar ağacının criterion parametresi ['gini', 'entropy'] olabilir.
+###### 'criterion': hp.choice('criterion', ['gini', 'entropy'])
+
+- hp.uniform(label, low, high)
+Belirtilen alt ve üst sınır arasında sürekli bir aralıkta rastgele değer seçer. Örneğin, öğrenme oranı (learning_rate) genellikle bu şekilde tanımlanır.
+###### 'learning_rate': hp.uniform('learning_rate', 0.01, 0.3)
+
+- hp.quniform(label, low, high, q)
+Belirtilen sürekli aralıkta sabit artışlarla değer seçer. Örneğin, n_estimators için tam sayılar gereklidir, bu yüzden q ile adım büyüklüğü belirlenir.
+###### 'n_estimators': hp.quniform('n_estimators', 10, 200, 10)
+
+- hp.loguniform(label, low, high)
+Logaritmik ölçekli sürekli bir aralıkta rastgele değer seçer. Öğrenme oranı gibi parametrelerde çok küçük değerler önemli olabilir.
+###### 'learning_rate': hp.loguniform('learning_rate', -3, 0)  # 0.001 ile 1 arasında
+
+- hp.randint(label, upper)
+Belirtilen üst sınıra kadar tam sayı değerler seçer.
+###### 'max_depth': hp.randint('max_depth', 20)
+
 
