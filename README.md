@@ -134,7 +134,7 @@ TPOT, çok sayıda model ve parametreyi test ettiği için yüksek hesaplama gü
 - Deneme ve Güncelleme: Önerilen hiperparametreler denendikten sonra sonuçlar kaydedilir ve olasılık modelleri güncellenir. Bu işlem, belirlenen bir iterasyon veya zaman sınırına kadar devam eder.
 
 ##### Tree-structured Parzen Estimator (TPE) Parametre Ayarlamaları
-###### 1. Hiperparametre Arama Alanı (Search Space)
+##### 1. Hiperparametre Arama Alanı (Search Space)
 - hp.choice(label, options)
 Ayrık (discrete) değerler arasından seçim yapar. Örneğin, karar ağacının criterion parametresi ['gini', 'entropy'] olabilir.
 ###### 'criterion': hp.choice('criterion', ['gini', 'entropy'])
@@ -155,7 +155,7 @@ Logaritmik ölçekli sürekli bir aralıkta rastgele değer seçer. Öğrenme or
 Belirtilen üst sınıra kadar tam sayı değerler seçer.
 ###### 'max_depth': hp.randint('max_depth', 20)
 
-###### 2. Amaç Fonksiyonu (Objective Function)
+##### 2. Amaç Fonksiyonu (Objective Function)
 Amaç fonksiyonu, TPE'nin optimize edeceği performans ölçütünü tanımlar. Bu, genellikle modelin hiperparametreler için doğrulama setindeki performansını döndüren bir fonksiyondur.
 
 Amaç: Performans metriğini en aza indirmek veya en üst düzeye çıkarmak.
@@ -171,7 +171,7 @@ Negatif metrikler: Hyperopt, optimize edilen değeri minimum yapmayı hedefler. 
 ######     score = cross_val_score(model, X, y, cv=3).mean()
 ######     return -score
 
-###### 3. fmin Fonksiyonu
+##### 3. fmin Fonksiyonu
 
 Bu fonksiyon, TPE'nin temel optimizasyon fonksiyonudur ve şu parametrelerle çalışır:
 - fn (Objective Function): Optimize edilmek istenen amaç fonksiyonunu belirtir.
@@ -184,7 +184,7 @@ Bu fonksiyon, TPE'nin temel optimizasyon fonksiyonudur ve şu parametrelerle ça
 trials = Trials()
 
 
-##### Örnek Çalışma 
+#### Örnek Çalışma 
 ![image](https://github.com/akay35/hiperparametre-optimizasyon-metodlari/blob/main/tpe1.png)
 1. Hedef Fonksiyon (Objective Function)
 Hedef fonksiyon, optimizasyon algoritmasının değerlendireceği parametrelerin model üzerindeki etkisini ölçer.
@@ -246,6 +246,39 @@ trials nesnesi sayesinde tüm deneme kayıtlarına fonksiyon dışında aşağı
 Sonuçlar:
 fmin, en iyi hiperparametre kombinasyonunu döndürür ve bu kombinasyon best_params değişkenine kaydedilir.
 
+---
 
+### Genel Değerlendirme ve Hangi Durumlarda Hangi Yöntem Tercih Edilmeli?
+![image](https://github.com/akay35/hiperparametre-optimizasyon-metodlari/blob/main/METR%C4%B0KLER%C4%B0N%20DE%C4%9EERLEND%C4%B0R%C4%B0LMES%C4%B0.png)
+
+#### 1. TPOTClassifier
+Genel Performans: TPOTClassifier, doğruluk (accuracy) açısından en yüksek sonucu veriyor (0.819). Ancak, diğer metriklerde (F1-Score: 0.625, ROC AUC: 0.739) daha düşük performans sergiliyor. Yani, model genel olarak doğru tahminler yapıyor ama pozitif sınıfı ve dengesiz sınıf problemlerini yeterince iyi ayırt edemiyor.
+
+- Ne zaman tercih edilmeli?
+Eğer doğruluk önemliyse, yani genel doğruluğu artırmak istiyorsanız, TPOTClassifier iyi bir seçim olabilir. Bu, örneğin, sınıfların oldukça dengeli olduğu ve tüm sınıfların doğru tahmin edilmesinin kritik olmadığı durumlarda geçerli olabilir.
+Fakat, sınıfların dengesiz olduğu bir durumdaysanız, TPOTClassifier'in sınıflar arasındaki farkları yeterince iyi ayırt edemeyebileceğini unutmayın.
+
+#### 2. TPE (Tree-structured Parzen Estimator) ve BayesSearchCV
+Genel Performans: TPE ve BayesSearchCV, ROC AUC (0.846) ve recall (0.806) gibi metriklerde en yüksek sonuçları almış. ROC AUC, modelin pozitif ve negatif sınıfları ayırt etme yeteneğini ölçerken, recall ise pozitif sınıfı doğru tahmin etme yeteneğini gösteriyor. Yani bu iki yöntem, pozitif sınıfın doğru tahmin edilmesi ve sınıf ayırt edebilme kabiliyetinin güçlü olduğu durumları işaret ediyor.
+
+Ne zaman tercih edilmeli?
+Eğer modelin pozitif sınıfı doğru tahmin etme yeteneği önemliyse, yani yalan negatiflerin (false negatives) önemli olduğu bir problem çözüyorsanız (örneğin, hastalık tespiti veya spam e-postalarının tespiti gibi), TPE ve BayesSearchCV daha iyi performans gösterecektir.
+Ayrıca, dengesiz sınıf dağılımı olan veri setlerinde de bu yöntemlerin performansı daha güçlü olacaktır çünkü ROC AUC ve recall, modelin her iki sınıfı da doğru şekilde ayırıp ayırmadığını dikkate alır.
+
+#### 3. HalvingGridSearchCV
+Genel Performans: HalvingGridSearchCV, F1-Score'da en yüksek (0.631) skoru almış. Bu, modelin hem pozitif hem de negatif sınıfları dengeli bir şekilde tahmin ettiğini gösterir. Yüksek F1-Score, yanlış pozitif ve yanlış negatif hatalarının minimize edildiğini gösterir.
+
+Ne zaman tercih edilmeli?
+Eğer dengeleme (precision-recall trade-off) önem taşıyorsa ve her iki sınıfın doğru tahmin edilmesi isteniyorsa, HalvingGridSearchCV iyi bir tercihtir. Özellikle dengesiz sınıf problemleriyle çalışırken her iki sınıfı da dengeli bir şekilde tahmin edebilmek için F1-Score önemli bir metriktir.
+Bu yöntem, karmaşık hiperparametre arama alanlarına sahip ve büyük veri setleri üzerinde çalışan modeller için de oldukça etkili olabilir çünkü grid search algoritmasının daha hızlı bir şekilde çözülmesini sağlar.
+
+#### 4. GridSearchCV ve RandomSearchCV
+Genel Performans: GridSearchCV ve RandomSearchCV, genel olarak dengeyi koruyan metrikler sunuyorlar, ancak ROC AUC ve recall gibi metriklerde diğer yöntemlerin gerisinde kalıyorlar.
+
+Ne zaman tercih edilmeli?
+Eğer modelin parametre optimizasyonu yapılırken, hızlı bir başlangıç ve deneysel esneklik isteniyorsa bu yöntemler tercih edilebilir. Özellikle daha küçük veri setlerinde ve daha az karmaşık modellerde GridSearchCV ve RandomSearchCV iyi sonuçlar verebilir.
+Ancak büyük ve dengesiz veri setlerinde ya da çok daha yüksek metrik performansı isteyen bir durumda, TPE veya BayesSearchCV gibi yöntemler daha uygun olacaktır.
+
+![image](https://github.com/akay35/hiperparametre-optimizasyon-metodlari/blob/main/genel%20de%C4%9Ferlendirme.png)
 
 
