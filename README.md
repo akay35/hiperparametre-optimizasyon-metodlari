@@ -155,4 +155,96 @@ Logaritmik ölçekli sürekli bir aralıkta rastgele değer seçer. Öğrenme or
 Belirtilen üst sınıra kadar tam sayı değerler seçer.
 ###### 'max_depth': hp.randint('max_depth', 20)
 
+###### 2. Amaç Fonksiyonu (Objective Function)
+Amaç fonksiyonu, TPE'nin optimize edeceği performans ölçütünü tanımlar. Bu, genellikle modelin hiperparametreler için doğrulama setindeki performansını döndüren bir fonksiyondur.
+
+Amaç: Performans metriğini en aza indirmek veya en üst düzeye çıkarmak.
+
+Negatif metrikler: Hyperopt, optimize edilen değeri minimum yapmayı hedefler. Pozitif bir metriği en iyi yapılması isteniliyorsa (örneğin accuracy), negatifini döndürülmelidir:
+###### return -accuracy
+- Örnek:
+###### def objective(params):
+######     model = RandomForestClassifier(
+######         max_depth=params['max_depth'],
+######         n_estimators=int(params['n_estimators']),
+######         criterion=params['criterion'])
+######     score = cross_val_score(model, X, y, cv=3).mean()
+######     return -score
+
+###### 3. fmin Fonksiyonu
+
+Bu fonksiyon, TPE'nin temel optimizasyon fonksiyonudur ve şu parametrelerle çalışır:
+- fn (Objective Function): Optimize edilmek istenen amaç fonksiyonunu belirtir.
+- space (Search Space): Hiperparametre arama alanını belirtir.
+- algo (Algorithm): Kullanılacak optimizasyon algoritmasını belirtir. TPE için:
+###### algo=tpe.suggest
+- max_evals (Maksimum Deneme Sayısı): Kaç farklı hiperparametre kombinasyonu deneneceğini belirtir.
+###### max_evals=50  # 50 farklı kombinasyon denenecek
+- trials (Deneme Geçmişi): Hangi denemelerin yapıldığını ve sonuçlarını kaydeden bir objedir. Sonuçları görselleştirmek veya analiz etmek için kullanılabilir.
+trials = Trials()
+
+
+##### Örnek Çalışma 
+![image](https://github.com/akay35/hiperparametre-optimizasyon-metodlari/blob/main/tpe1.png)
+1. Hedef Fonksiyon (Objective Function)
+Hedef fonksiyon, optimizasyon algoritmasının değerlendireceği parametrelerin model üzerindeki etkisini ölçer.
+###### Parametrelerin hazırlanması:
+params: TPE'nin önerdiği parametreler model formatına dönüştürülüyor. Örneğin:
+- learning_rate: Modelin öğrenme hızı.
+- n_estimators: Ağaç sayısı (tam sayı olarak verilmesi gerektiği için int() ile çevrilir).
+- colsample_bytree: Özelliklerin örnekleme oranı.
+- num_leaves: Modeldeki yaprak sayısı.
+- max_depth: Ağacın maksimum derinliği.
+Model oluşturma:
+lgb.LGBMClassifier: LightGBM modeli, verilen parametrelerle oluşturuluyor.
+Modelin değerlendirilmesi:
+cross_val_score: 5 katlı çapraz doğrulama kullanarak modelin performansı hesaplanır.
+scoring='roc_auc': Performans ölçütü olarak ROC AUC (Receiver Operating Characteristic - Area Under Curve) kullanılır.
+###### Sonuç döndürme:
+loss: Negatif ROC AUC değeri döndürülür. Çünkü Hyperopt, bu değeri minimum yapmayı hedefler. Bu nedenle performansı artırmak için negatif bir değer kullanılır.
+status: Fonksiyonun başarı durumu.
+
+2. Parametre Arama Alanı (Search Space)
+Hiperparametrelerin değer aralıkları bu alanda tanımlanır:
+- learning_rate (hp.uniform):
+Sürekli bir değer alır.
+Aralık: 0.005 ile 0.1 (daha düşük öğrenme hızları daha hassas öğrenme sağlar).
+
+- n_estimators (hp.quniform):
+Belirli adımlarla tam sayı değer alır.
+Aralık: 10 ile 350 arasında, 5 adımlarla.
+
+- colsample_bytree (hp.uniform):
+Bir ağacın eğitiminde kullanılacak özelliklerin oranı (0.3 ile 1 arasında).
+Düşük değerler fazla özellik seçiminden kaçınır.
+
+- num_leaves (hp.quniform):
+Modelin yaprak sayısını kontrol eder (overfitting’i kontrol etmek için önemli).
+Aralık: 5 ile 35 arasında.
+
+- max_depth (hp.quniform):
+Ağacın maksimum derinliğini kontrol eder.
+Aralık: 3 ile 10.
+
+![image](https://github.com/akay35/hiperparametre-optimizasyon-metodlari/blob/main/tpe2.png)
+3. Optimizasyon Süreci
+Bu bölümde, TPE algoritması ile en iyi parametre kombinasyonu aranır:
+- Trials():
+Tüm denemeleri ve sonuçlarını kaydeder.
+Performans analizinde kullanılabilir.
+trials nesnesinin fonksiyonun dışında tanımlanmasının sebebi, TPE algoritmasının optimizasyon sırasında yaptığı her denemeyi (parametre kombinasyonlarını ve bunların sonuçlarını) kaydetmek ve bu bilgilere daha sonra erişilebilmeyi sağlamaktır.
+trials nesnesi sayesinde tüm deneme kayıtlarına fonksiyon dışında aşağıdaki kodlar ile erişilebilir.
+###### print(trials.results)  # Denemelerin sonuçlarını gösterir
+###### print(trials.best_trial)  # En iyi sonucu döndüren deneme
+
+- fmin Fonksiyonu:
+###### fn=objective: Optimize edilecek hedef fonksiyon.
+###### space=param_space: Hiperparametre arama alanı.
+###### algo=tpe.suggest: TPE algoritması kullanılacak.
+###### max_evals=50: 50 farklı parametre kombinasyonu denenecek.
+Sonuçlar:
+fmin, en iyi hiperparametre kombinasyonunu döndürür ve bu kombinasyon best_params değişkenine kaydedilir.
+
+
+
 
