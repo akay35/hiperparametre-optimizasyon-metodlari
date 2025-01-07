@@ -227,6 +227,7 @@ Ağacın maksimum derinliğini kontrol eder.
 Aralık: 3 ile 10.
 
 ![image](https://github.com/akay35/hiperparametre-optimizasyon-metodlari/blob/main/tpe2.png)
+
 3. Optimizasyon Süreci
 Bu bölümde, TPE algoritması ile en iyi parametre kombinasyonu aranır:
 - Trials():
